@@ -1,9 +1,9 @@
 # SQLite.swift Documentation
 
   - [Installation](#installation)
+    - [Carthage](#carthage)
     - [CocoaPods](#cocoapods)
     - [Manual](#manual)
-    - [SQLCipher](#sqlcipher)
     - [Frameworkless Targets](#frameworkless-targets)
   - [Getting Started](#getting-started)
     - [Connecting to a Database](#connecting-to-a-database)
@@ -68,23 +68,45 @@
 > _Note:_ SQLite.swift requires Swift 2 (and [Xcode 7](https://developer.apple.com/xcode/downloads/)) or greater.
 
 
+### Carthage
+
+[Carthage][] is a simple, decentralized dependency manager for Cocoa. To
+install SQLite.swift with Carthage:
+
+ 1. Make sure Carthage is [installed][Carthage Installation].
+
+ 2. Update your Cartfile to include the following:
+
+    ```
+    github "stephencelis/SQLite.swift" ~> 0.10.1
+    ```
+
+ 3. Run `carthage update` and [add the appropriate framework][Carthage Usage].
+
+
+[Carthage]: https://github.com/Carthage/Carthage
+[Carthage Installation]: https://github.com/Carthage/Carthage#installing-carthage
+[Carthage Usage]: https://github.com/Carthage/Carthage#adding-frameworks-to-an-application
+
+
 ### CocoaPods
 
 [CocoaPods][] is a dependency manager for Cocoa projects. To install SQLite.swift with CocoaPods:
 
- 1. Make sure CocoaPods is [installed][CocoaPods Installation] (SQLite.swift requires version 0.37 or greater).
+ 1. Make sure the latest CocoaPods beta is [installed][CocoaPods Installation]. (SQLite.swift requires version 1.0.0.beta.6 or greater.)
+
+    ``` sh
+    # Using the default Ruby install will require you to use sudo when
+    # installing and updating gems.
+    sudo gem install --pre cocoapods
+    ```
 
  2. Update your Podfile to include the following:
 
     ``` ruby
     use_frameworks!
 
-    pod 'SQLite.swift',
-      git: 'https://github.com/stephencelis/SQLite.swift.git'
-
-    # instead, for SQLCipher support
-    pod 'SQLiteCipher.swift',
-      git: 'https://github.com/stephencelis/SQLite.swift.git'
+    pod 'SQLite.swift', '~> 0.10.1'
     ```
 
  3. Run `pod install`.
@@ -108,22 +130,6 @@ To install SQLite.swift as an Xcode sub-project:
  4. **Add**.
 
 You should now be able to `import SQLite` from any of your target’s source files and begin using SQLite.swift.
-
-
-#### SQLCipher
-
-> _Note_: To install with CocoaPods, [see above](#cocoapods).
-
-To install SQLite.swift with [SQLCipher](http://sqlcipher.net) support:
-
- 1. Make sure the **sqlcipher** working copy is checked out in Xcode. If **sqlcipher.xcodeproj** is unavailable (_i.e._, it appears red), go to the **Source Control** menu and select **Check Out sqlcipher…** from the **sqlcipher** menu item.
-
- 2. Follow [the instructions above](#manual) with the **SQLiteCipher** target, instead.
-
-> _Note:_ By default, SQLCipher compiles [without support for full-text search](https://github.com/sqlcipher/sqlcipher/issues/102). If you intend to use [FTS4](#full-text-search), make sure you add the following to **Other C Flags** in the **Build Settings** of the **sqlcipher** target (in the **sqlcipher.xcodeproj** project):
->
->  - `-DSQLITE_ENABLE_FTS4`
->  - `-DSQLITE_ENABLE_FTS3_PARENTHESIS`
 
 
 ### Frameworkless Targets
@@ -201,7 +207,8 @@ let db = try Connection(path, readonly: true)
 ```
 
 > _Note:_ Signed applications cannot modify their bundle resources. If you bundle a database file with your app for the purpose of bootstrapping, copy it to a writable location _before_ establishing a connection (see [Read-Write Databases](#read-write-databases), above, for typical, writable locations).
-
+> 
+> See these two Stack Overflow questions for more information about iOS apps with SQLite databases: [1](https://stackoverflow.com/questions/34609746/what-different-between-store-database-in-different-locations-in-ios), [2](https://stackoverflow.com/questions/34614968/ios-how-to-copy-pre-seeded-database-at-the-first-running-app-with-sqlite-swift). We welcome sample code to show how to successfully copy and use a bundled "seed" database for writing in an app.
 
 #### In-Memory Databases
 
@@ -1428,13 +1435,15 @@ Though we recommend you stick with SQLite.swift’s [type-safe system](#building
     db.changes // -> {Some 1}
     ```
 
-    Statements with results may be iterated over.
+    Statements with results may be iterated over, using the columnNames if useful.
 
     ``` swift
     let stmt = try db.prepare("SELECT id, email FROM users")
     for row in stmt {
-        print("id: \(row[0]), email: \(row[1])")
-        // id: Optional(1), email: Optional("alice@mac.com")
+        for (index, name) in stmt.columnNames.enumerate() {
+            print ("\(name)=\(row[index]!)")
+            // id: Optional(1), email: Optional("alice@mac.com")
+        }
     }
     ```
 
